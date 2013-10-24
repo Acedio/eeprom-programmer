@@ -17,6 +17,10 @@ int romWriteEnablePin = 19;
 
 int shiftBits = 12;
 
+char *ack = "eepeepack";
+char cmd_clear = 'c';
+char cmd_write = 'w';
+
 void shiftInt(int num){
   digitalWrite(shiftClkPin, LOW);
   digitalWrite(shiftRegPin, LOW);
@@ -125,14 +129,31 @@ void clearROM(){
 
 // the loop routine runs over and over again forever:
 void loop() {
+  int waiting = 1;
+  while(waiting) {
+    Serial.println(ack);
+    if(Serial.find(ack)) {
+        waiting = 0;
+    }
+  }
+  char cmd;
+
+  Serial.readBytes(&cmd, 1);
+
+  Serial.print("CMD:");
+  Serial.println(cmd);
+
+  if(cmd == cmd_clear) {
+    clearROM();
+  }
+
   unsigned long address = 0;
-  //clearROM();
   while(true) {
     Serial.print(address, HEX);
     Serial.print(" ");
     //burnByte(address, address & 0xFF);
     unsigned char data = readByte(address++);
-    Serial.println(0xFE, HEX);
+    Serial.println(data, HEX);
     //delay(100);
   }
 }
