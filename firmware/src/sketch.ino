@@ -18,8 +18,12 @@ int romWriteEnablePin = 19;
 int shiftBits = 12;
 
 char *ack = "eepeepack";
+char *cmd_ack = "eepeepcmd";
 char cmd_clear = 'c';
 char cmd_write = 'w';
+char cmd_dump = 'd';
+
+const unsigned long CHIP_SIZE = 0x40000;
 
 void shiftInt(int num){
   digitalWrite(shiftClkPin, LOW);
@@ -110,8 +114,6 @@ void setup() {
   DDRD |= 0xFC;
   
   digitalWrite(shiftClearPin, HIGH);
-  
-  writeData(0x33);
 }
 
 void clearROM(){
@@ -131,7 +133,7 @@ void clearROM(){
 void loop() {
   int waiting = 1;
   while(waiting) {
-    Serial.println(ack);
+    Serial.print(ack);
     if(Serial.find(ack)) {
         waiting = 0;
     }
@@ -140,20 +142,30 @@ void loop() {
 
   Serial.readBytes(&cmd, 1);
 
-  Serial.print("CMD:");
-  Serial.println(cmd);
+  Serial.write(cmd_ack);
+  Serial.write(cmd);
 
   if(cmd == cmd_clear) {
     clearROM();
-  }
-
-  unsigned long address = 0;
-  while(true) {
-    Serial.print(address, HEX);
-    Serial.print(" ");
-    //burnByte(address, address & 0xFF);
-    unsigned char data = readByte(address++);
-    Serial.println(data, HEX);
-    //delay(100);
+  } else if(cmd == cmd_dump) {
+      unsigned long address = 0;
+      for(address = 0; address < CHIP_SIZE; address++) {
+        byte data = readByte(address);
+        //Serial.println(data, HEX);
+        Serial.write(data);
+      }
+  } else if(cmd == cmd_write) {
+      unsigned long address;
+      for(address = 0; address < CHIP_SIZE; address++) {
+          char data, check;
+          Serial.readBytes(&data, 1);
+          do {
+              burnByte(address,data);
+              check = readByte(address);
+              Serial.write(check);
+          } while(check != data);
+          //Serial.print(" ");
+          //Serial.println(data,HEX);
+      }
   }
 }
