@@ -65,8 +65,8 @@ elif args.f != None:
         ser.write(data)
         check = ser.read(1)
         print(hex(i))
-        if check != data:
+        while check != data:
             print('Failed.')
-            break
+            check = ser.read(1)
 while True:
     print(ser.readline(10).decode('utf-8'))

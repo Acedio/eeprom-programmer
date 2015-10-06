@@ -157,8 +157,11 @@ void loop() {
   } else if(cmd == cmd_write) {
       unsigned long address;
       for(address = 0; address < CHIP_SIZE; address++) {
-          char data, check;
-          Serial.readBytes(&data, 1);
+          byte data, check;
+
+          while(!Serial.available());
+          data = Serial.read();
+
           do {
               burnByte(address,data);
               check = readByte(address);
